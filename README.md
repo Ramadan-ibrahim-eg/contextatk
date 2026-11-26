@@ -6,3 +6,7 @@ Keep your context as name/value notes and hand it to any AI model through a priv
 - `www/src`: the website and dashboard worker source.
 
 Only the source files are published here. Deploy configuration, database schema and secrets are not included.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
