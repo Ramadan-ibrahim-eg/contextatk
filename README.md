@@ -2,7 +2,7 @@
 
 Keep your context as name/value notes and hand it to any AI model through a private read-only link. Open source, built on Cloudflare Workers + D1. Beta.
 
-- `api/`: the API worker (D1 database, rate limiting).
-- `www/`: the website and dashboard worker.
+- `api/src`: the API worker source (D1 database, rate limiting).
+- `www/src`: the website and dashboard worker source.
 
-Each folder has its own README with setup notes. Only source files are published here; set your own D1 database id and secrets (see each `.dev.vars.example`).
+Only the source files are published here. Deploy configuration, database schema and secrets are not included.
