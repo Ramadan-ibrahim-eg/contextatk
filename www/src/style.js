@@ -43,6 +43,9 @@ header a.brand { color:inherit; }
 .btn.primary { color:#fff; }
 #theme { font-size:1.1rem; line-height:1; }
 .gap { margin-top:18px; }
+.guide h3 { margin:18px 0 6px; font-size:1rem; }
+.guide ul { padding-inline-start:20px; margin:6px 0; }
+.guide li { margin-bottom:6px; }
 
 /* footer and information pages */
 .site-footer { max-width:860px; margin:32px auto 80px; padding:16px; border-top:1px solid var(--line); }

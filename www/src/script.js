@@ -240,6 +240,38 @@ function contextPanel() {
       } }, t("add")))));
 }
 
+// One card at the bottom of the page: every step, what happens at each one, and how to use name/value notes well.
+function guideCard() {
+  const sec = (title, ...items) => [el("h3", {}, title), el("ul", { class: "small" }, items.map((x) => el("li", {}, x)))];
+  return el("div", { class: "card guide" },
+    el("h2", {}, "How to use contextatk"),
+    el("p", { class: "muted small" }, "A short guide to every step, and to getting the most out of name and value notes."),
+    ...sec("1. What this is",
+      "A context is a list of notes. Each note has a name (a key) and a value. You keep them here once, and give an AI model a link so it can read them.",
+      "The link is read-only. A model that opens it sees your notes as plain text. It cannot change, add or delete anything.",
+      "Nothing is guaranteed about what a model does with the link. Some models can open links and some cannot. If one cannot, copy the notes into the chat yourself."),
+    ...sec("2. Step by step",
+      "Create a context with New context. Give it a name you will recognise, such as Work or Personal.",
+      "Add notes with Name and Value, then Add. You can Edit or Delete any note later. Changes are saved at once.",
+      "Copy the text from the box under Your private link. Paste it as the first message to the model, then ask your question.",
+      "If you update a note, the link stays the same. The model reads the current notes each time it opens the link, so you do not paste a new link."),
+    ...sec("3. Writing good notes",
+      "One topic per note. A note called Writing style is better than one big note that holds everything.",
+      "Short, clear names that say what the value is: Role, Language, Project, Tone, Do not use. Names can be up to 128 bytes.",
+      "Short, direct values. Write what you want the model to know, in plain sentences. Lists are fine.",
+      "Keep each value small: the limit is 100 KB for one value and 500 KB for all your contexts together. Notes are text only, no files.",
+      "Do not store passwords, card numbers, ID numbers or anything you would not paste into a chat. Anyone who has the link can read the notes."),
+    ...sec("4. Output format and text style",
+      "Output format changes how the model receives the notes. txt is plain lines and the default. md is Markdown with a heading per note. yaml and json are structured and suit tools or code. The format is the last part of the copied link.",
+      "Text style is the short message placed under the link. Standard fits most chats. About me is for who you are and how you work. Preferences is for how you like answers written. Current work is for the task in hand. Link only sends just the link.",
+      "You can edit the copied text before you paste it. Nothing else depends on the style you pick."),
+    ...sec("5. Contexts, links and copies",
+      "Create a new link replaces the link of that context. The old link stops working at once, and the notes stay as they are. Use it if a link was shared by mistake.",
+      "Duplicate this context makes a separate copy with the same notes and its own new link. Changing one does not change the other. The copy counts toward your 500 KB, and you can have up to 10 contexts. If there is not enough space, the copy is not made.",
+      "Delete this context removes the context and all its notes, and its link stops working.",
+      "Your contexts are deleted 30 days after your last sign-in. This is a beta, so keep your own copy of anything important."));
+}
+
 function render() {
     const out = document.getElementById("logout"); out.textContent = t("signout"); out.hidden = !state.me;
   app.replaceChildren();
@@ -247,7 +279,7 @@ function render() {
   app.append(...[
     el("div", { class: "notice small" }, t("beta")),
     state.msg && el("p", { class: "error", role: "alert" }, state.msg),
-    quotaCard(), contextsCard(), contextPanel()].filter(Boolean));
+    quotaCard(), contextsCard(), contextPanel(), guideCard()].filter(Boolean));
 }
 
 document.getElementById("logout").addEventListener("click", async () => { await fetch("/auth/logout", { method: "POST", credentials: "same-origin" }); state.me = null; state.current = null; render(); });
