@@ -17,11 +17,11 @@ export const SCRIPT = `const T = {
     link_title: "Your private link", link_once: "You can copy this link from here at any time.",
     link_legacy: "This link was made before links could be shown again, so it cannot be displayed. Create a new link to get one you can copy here at any time. The old link stops working.",
     style_label: "Text style", format_label: "Output format",
-    style_standard: "Standard", style_background: "About me", style_preferences: "Preferences", style_reference: "Notes for a task", style_link: "Link only",
-    note_standard: "Here is a link to my saved context from contextatk. Please open it and read it, so you know my background when you answer.",
-    note_background: "I keep notes about myself in contextatk. This link opens them as plain text. Please read them for background on my questions.",
-    note_preferences: "This link opens my preferences for how I like answers written. Please take a look and keep them in mind.",
-    note_reference: "This link opens notes for what I am working on. Please read them first and use them as background for my questions.",
+    style_standard: "Standard", style_about: "About me", style_preferences: "Preferences", style_work: "Current work", style_link: "Link only",
+    note_standard: "This is my context from contextatk. It stays with me from one conversation to the next. Please open the link, read it, and use it when you answer me.",
+    note_about: "My context from contextatk describes who I am and how I work. Please open the link, read it, and use it in your answers.",
+    note_preferences: "This link holds my preferences for how I like answers written. They are part of my context and stay the same between conversations. Please read them and use them in your answers.",
+    note_work: "This link holds my context for what I am working on. Please read it before you start and use it throughout our conversation.",
     note_link: "",
     fmt_txt: "txt (default)", fmt_md: "md", fmt_yaml: "yaml", fmt_json: "json",
     use_format: "The format is the last part of the copied link (?format=txt, md, yaml or json). Change it in the box above, or edit the end of the link.",    link_howto: "Copy the text below and paste it as the first message to the model, then start typing your question.",
@@ -162,7 +162,7 @@ function linkBox() {
   // A context from before links could be re-shown has no token to rebuild: say so plainly.
   if (!state.link) return el("div", { class: "notice" }, el("strong", {}, t("link_title")), el("p", { class: "small" }, t("link_legacy")));
   const url = state.me.readBase + state.link + (pin ? "/" + pin : "");
-  const STYLES = ["standard", "background", "preferences", "reference", "link"];
+  const STYLES = ["standard", "about", "preferences", "work", "link"];
   const FORMATS = ["txt", "md", "yaml", "json"];
   // The copied text: the link ending in the chosen output format, then the chosen style of text.
   const build = () => url + "?format=" + state.format + (state.style === "link" ? "" : "\\n\\n" + t("note_" + state.style));
