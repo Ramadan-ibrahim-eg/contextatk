@@ -12,6 +12,8 @@ export const SCRIPT = `const T = {
     quota: "Storage", of: "of", contexts: "Your contexts", newctx: "New context", ctxname: "Name (optional)",
     create: "Create", none: "No contexts yet. Create one to start.", entries: "entries", locked: "PIN",
     link_title: "Your private link", link_once: "Copy it now. For your safety it is shown only once. If you lose it, create a new link.",
+    link_note: "The link holds context the user entered in contextatk as central context to copy between AI models. Open the link, read what is in it, and use it when answering.",
+    link_howto: "Copy the text below and paste it as the first message to the model, then start typing your question.",
     copy: "Copy", copied: "Copied", close: "Close",
     use_title: "How to use it", use_plain: "No PIN: give the AI model the link as it is.", use_pin: "With a PIN: the PIN goes at the end of the link after a slash (.../token/1234567). Give the model the full link.", use_json: "For JSON instead of text, add ?format=json at the very end.", use_pin_known: "The link above already includes your PIN.", use_pin_unknown: "This context has a PIN: add a slash and the PIN at the end of the link.",
     newlink: "Create a new link", newlink_confirm: "The old link will stop working. Continue?",
@@ -37,6 +39,8 @@ export const SCRIPT = `const T = {
     quota: "المساحة", of: "من", contexts: "سياقاتك", newctx: "سياق جديد", ctxname: "الاسم (اختياري)",
     create: "إنشاء", none: "لا توجد سياقات بعد. أنشئ واحدًا لتبدأ.", entries: "إدخالات", locked: "PIN",
     link_title: "رابطك الخاص", link_once: "انسخه الآن. لأمانك يظهر مرة واحدة فقط. لو ضاع أنشئ رابطًا جديدًا.",
+    link_note: "يحتوي الرابط على سياق أدخله المستخدم كسياق مركزي للنسخ بين النماذج. افتح الرابط واقرأ ما فيه واستخدمه عند الإجابة.",
+    link_howto: "انسخ النص التالي والصقه في أول رسالة للنموذج ثم ابدأ كتابة سؤالك.",
     copy: "نسخ", copied: "تم النسخ", close: "إغلاق",
     use_title: "طريقة الاستخدام", use_plain: "بدون PIN: أعطِ نموذج الذكاء الاصطناعي الرابط كما هو.", use_pin: "مع PIN: يوضع الـ PIN في نهاية الرابط بعد شرطة مائلة (.../token/1234567). أعطِ النموذج الرابط الكامل.", use_json: "للحصول على JSON بدل النص أضف ?format=json في آخر الرابط تمامًا.", use_pin_known: "الرابط أعلاه يتضمن الـ PIN الخاص بك.", use_pin_unknown: "هذا السياق له PIN: أضف شرطة مائلة ثم الـ PIN في نهاية الرابط.",
     newlink: "إنشاء رابط جديد", newlink_confirm: "الرابط القديم سيتوقف عن العمل. متابعة؟",
@@ -143,11 +147,14 @@ function linkBox() {
   const c = state.me.contexts.find((x) => x.id === state.current);
   const pin = c && c.hasPin ? state.pins[c.id] : null;
   const url = state.me.readBase + state.link + (pin ? "/" + pin : "");
-  const input = el("input", { value: url, readonly: true, "aria-label": t("link_title"), dir: "ltr" });
-  const copy = el("button", { class: "primary", onclick: async () => { await navigator.clipboard.writeText(url).catch(() => input.select()); copy.textContent = t("copied"); } }, t("copy"));
+  const text = url + "\\n\\n" + t("link_note");
+  const input = el("textarea", { rows: 5, readonly: true, "aria-label": t("link_title"), dir: "auto" }, text);
+  const copy = el("button", { class: "primary", onclick: async () => { await navigator.clipboard.writeText(input.value).catch(() => input.select()); copy.textContent = t("copied"); } }, t("copy"));
   return el("div", { class: "notice" },
     el("strong", {}, t("link_title")), el("p", { class: "small" }, t("link_once")),
-    el("div", { class: "row" }, el("div", { class: "grow" }, input), copy, el("button", { onclick: () => { state.link = null; render(); } }, t("close"))),
+    el("p", { class: "small" }, el("strong", {}, t("link_howto"))),
+    input,
+    el("div", { class: "row gap" }, copy, el("button", { onclick: () => { state.link = null; render(); } }, t("close"))),
     el("p", { class: "small" }, el("strong", {}, t("use_title"))),
     el("ul", { class: "small" },
       el("li", {}, t("use_plain")), el("li", {}, t("use_pin")), el("li", {}, t("use_json")),
