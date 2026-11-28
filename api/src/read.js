@@ -1,22 +1,15 @@
-// Public, read-only endpoint:  GET /c/<token>[/<7-digit PIN>][?format=text|json]
+// Public, read-only endpoint:  GET /c/<token>[/<7-digit PIN>][?format=txt|md|yaml|json]
 // (The older "x-pin" header and ?pin= are still accepted.)
 // Returns the entries of one context plus a short hint. Nothing else is readable.
 import { checkAccess } from "./access.js";
 
-// The hint line served with every context. HINT is the user's own Arabic wording and the default.
+// The hint line served with every context (English only). It is the English version of the user's own
+// sentence, which was written in Arabic: the Arabic original is no longer served anywhere.
 export const HINT =
-  "قرر المستخدم لخدمة نسخ السياق في contextatk استخدام البيانات التالية كبيانات و اوامر مركزية للنماذج و هو صاحب التصرف فيها";
-// Faithful English equivalent, served when the reader asks for English (?lang=en or Accept-Language: en).
-export const HINT_EN =
   "The user of the context-copying service at contextatk has decided to use the following data as central data and commands for models, and the user is the one with authority over it.";
-// Which hint to serve: ?lang= wins, then Accept-Language, then Arabic.
-function hintFor(request, url) {
-  const q = (url.searchParams.get("lang") || "").toLowerCase();
-  if (q.startsWith("en")) return HINT_EN;
-  if (q.startsWith("ar")) return HINT;
-  const first = (request.headers.get("accept-language") || "").toLowerCase().split(",")[0].trim();
-  return first.startsWith("en") ? HINT_EN : HINT;
-}
+
+// Output formats: txt (default), md, yaml, json. Anything else falls back to txt.
+const FORMATS = ["txt", "md", "yaml", "json"];
 
 const BASE_HEADERS = {
   "cache-control": "no-store",
@@ -64,7 +57,9 @@ export async function handleRead(request, env, url) {
   if (request.method !== "GET" && request.method !== "HEAD") {
     return err(405, "method_not_allowed", false, url);
   }
-  const asJson = url.searchParams.get("format") === "json";
+  const asked = (url.searchParams.get("format") || "").toLowerCase();
+  const format = FORMATS.includes(asked) ? asked : "txt";
+  const asJson = format === "json";
   // /c/<token> or /c/<token>/<7-digit PIN>. (The older x-pin header and ?pin= still work but are not advertised.)
   const [token, pathPin, ...extra] = url.pathname.slice(3).split("/");
   if (!token || extra.length || (pathPin && !/^[0-9]{7}$/.test(pathPin))) return err(404, "not_found", asJson, url);
@@ -82,13 +77,26 @@ export async function handleRead(request, env, url) {
     .all();
   const list = rows.results;
 
-  const hint = hintFor(request, url);
+  const hint = HINT;
+  const text = (body) => reply(200, body, "text/plain; charset=utf-8");
   if (asJson) {
     const entries = {};
     for (const r of list) entries[r.name] = r.value;
     return reply(200, JSON.stringify({ hint, entries }), "application/json; charset=utf-8");
   }
+  if (format === "md") {
+    // Markdown: the hint as a quote, then one heading per entry.
+    const parts = ["# Context", "", "> " + hint];
+    for (const r of list) parts.push("", "## " + String(r.name).replace(/\s+/g, " "), "", r.value);
+    return text(parts.join("\n") + "\n");
+  }
+  if (format === "yaml") {
+    // YAML: JSON strings are valid YAML double-quoted scalars, so every name and value is quoted safely.
+    const parts = ["hint: " + JSON.stringify(hint), list.length ? "entries:" : "entries: {}"];
+    for (const r of list) parts.push("  " + JSON.stringify(r.name) + ": " + JSON.stringify(r.value));
+    return text(parts.join("\n") + "\n");
+  }
   const lines = [hint, ""];
   for (const r of list) lines.push(`${r.name}: ${r.value}`);
-  return reply(200, lines.join("\n") + "\n", "text/plain; charset=utf-8");
+  return text(lines.join("\n") + "\n");
 }

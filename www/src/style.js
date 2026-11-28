@@ -38,15 +38,12 @@ label { display:block; font-weight:600; margin:10px 0 4px; }
 .about { max-width:520px; margin:0 auto 32px; padding:0 16px; }
 .about ol { padding-inline-start:20px; margin:8px 0; }
 .about li { margin-bottom:8px; }
-[dir="rtl"] { direction: rtl; }
 a { color:var(--link); }
 header a.brand { color:inherit; }
 .btn.primary { color:#fff; }
 #theme { font-size:1.1rem; line-height:1; }
 .gap { margin-top:18px; }
 
-/* language switch: show only the chosen language (the page sets <html lang>) */
-html[lang="ar"] .en, html:not([lang="ar"]) .ar { display:none !important; }
 /* footer and information pages */
 .site-footer { max-width:860px; margin:32px auto 80px; padding:16px; border-top:1px solid var(--line); }
 .site-footer nav { display:flex; flex-wrap:wrap; gap:8px 20px; justify-content:center; }

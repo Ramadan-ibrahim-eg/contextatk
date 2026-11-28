@@ -27,7 +27,7 @@ const APP = `
     <section class="hero">
       <img src="/logo.jpg" alt="" width="96" height="96">
       <h1>contextatk</h1>
-      <p class="muted"><span class="en">Loading your contexts…</span><span class="ar">جارٍ تحميل سياقاتك…</span></p>
+      <p class="muted">Loading your contexts…</p>
     </section>`;
 
 export const PAGE = (app) => `<!doctype html>
@@ -49,7 +49,6 @@ export const PAGE = (app) => `<!doctype html>
   <meta property="og:url" content="{{SITE}}/">
   <meta property="og:image" content="{{SITE}}/icon-512.png">
   <meta property="og:locale" content="en_US">
-  <meta property="og:locale:alternate" content="ar_AR">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="contextatk (beta)">
   <meta name="twitter:description" content="Keep your context in one private place and hand it to any AI model with a link.">
@@ -65,7 +64,7 @@ export const PAGE = (app) => `<!doctype html>
 <body>
   <header>
     <a class="brand" href="/"><img src="/logo.jpg" alt="" width="32" height="32"><span>contextatk <small>beta</small></span></a>
-    <nav><button id="theme" class="link" type="button" aria-label="Dark mode / الوضع الليلي" title="Dark mode / الوضع الليلي"></button><button id="lang" class="link" type="button"></button><button id="logout" class="link" type="button" hidden></button></nav>
+    <nav><button id="theme" class="link" type="button" aria-label="Dark mode" title="Dark mode"></button><button id="logout" class="link" type="button" hidden></button></nav>
   </header>
   <main id="app" aria-live="polite">${app ? APP : LANDING}
   </main>

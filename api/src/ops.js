@@ -101,6 +101,46 @@ const OPS = {
     return { token };
   },
 
+  // An independent in-site copy of one of the member's contexts: same entries, a new context id and a new link.
+  // The copy counts against the member's quota and the contexts limit; both are checked in the same statement
+  // that creates it, so nothing is copied (and nothing is left half-made) when either limit would be passed.
+  async "context.duplicate"(env, b, now) {
+    const db = env.DB;
+    const member = memberId(b.member);
+    const source = contextId(b.context);
+    await requireActiveMember(db, member);
+    const row = await db.prepare("SELECT name FROM contexts WHERE id = ?1 AND member_id = ?2").bind(source, member).first();
+    if (!row) throw new Fail(404, "not_found");
+    const base = [...(row.name || "")].slice(0, LIMITS.CONTEXT_NAME_MAX_CHARS - 7).join("");
+    const name = base ? base + " (copy)" : "Copy";
+    const id = crypto.randomUUID();
+    const salt = randomHex(16);
+    const token = (await mintToken(env, id, salt)) || randomToken();
+    const [made] = await db.batch([
+      db
+        .prepare(
+          `INSERT INTO contexts (id, member_id, name, token_hash, token_salt, created_at)
+           SELECT ?1, ?2, ?3, ?4, ?5, ?6
+           WHERE (SELECT COUNT(*) FROM contexts WHERE member_id = ?2) < ?7
+             AND (SELECT COALESCE(SUM(e.size), 0) FROM entries e JOIN contexts c ON c.id = e.context_id WHERE c.member_id = ?2)
+               + (SELECT COALESCE(SUM(size), 0) FROM entries WHERE context_id = ?8) <= ?9`
+        )
+        .bind(id, member, name, await sha256Hex(token), salt, now, LIMITS.CONTEXTS_PER_MEMBER, source, LIMITS.QUOTA_BYTES),
+      db
+        .prepare(
+          `INSERT INTO entries (context_id, name, value, size, updated_at)
+           SELECT ?1, name, value, size, ?3 FROM entries
+            WHERE context_id = ?2 AND EXISTS (SELECT 1 FROM contexts WHERE id = ?1)`
+        )
+        .bind(id, source, now),
+    ]);
+    if (made.meta.changes !== 1) {
+      const n = await db.prepare("SELECT COUNT(*) AS n FROM contexts WHERE member_id = ?1").bind(member).first();
+      throw new Fail(409, n.n >= LIMITS.CONTEXTS_PER_MEMBER ? "too_many_contexts" : "quota_exceeded");
+    }
+    return { context: id, token };
+  },
+
   async "context.pin"(env, b) {
     const db = env.DB;
     const member = memberId(b.member);

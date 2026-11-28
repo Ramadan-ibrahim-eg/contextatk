@@ -1,18 +1,17 @@
-// Information pages: About, Privacy Policy, Terms of Use, Cookie Policy. English and Arabic in one HTML page each;
-// the page shows the language chosen with the language button (CSS keyed on <html lang>). Served at /about, /privacy, /terms, /cookies.
+// Information pages: About, Privacy Policy, Terms of Use, Cookie Policy. English only. Served at /about, /privacy, /terms, /cookies.
 // The text describes what the code really does. If the code changes, update the text.
 
 import { PIN_UI } from "./config.js";
 
-const UPDATED = { en: "Last updated: 26 November 2026", ar: "آخر تحديث: 26 نوفمبر 2026" };
+const UPDATED = { en: "Last updated: 26 November 2026" };
 
 // Footer on every view (landing page, app and these pages).
 export const FOOTER = `<footer class="site-footer">
     <nav aria-label="Site">
-      <a href="/about"><span class="en">About</span><span class="ar">من نحن</span></a>
-      <a href="/privacy"><span class="en">Privacy Policy</span><span class="ar">سياسة الخصوصية</span></a>
-      <a href="/terms"><span class="en">Terms of Use</span><span class="ar">شروط الاستخدام</span></a>
-      <a href="/cookies"><span class="en">Cookie Policy</span><span class="ar">سياسة ملفات تعريف الارتباط</span></a>
+      <a href="/about">About</a>
+      <a href="/privacy">Privacy Policy</a>
+      <a href="/terms">Terms of Use</a>
+      <a href="/cookies">Cookie Policy</a>
     </nav>
   </footer>`;
 
@@ -27,15 +26,12 @@ function extras(env) {
     mail,
     contact: {
       en: mail ? `<h2>Contact</h2><p><a href="mailto:${mail}">${mail}</a></p>` : "",
-      ar: mail ? `<h2>التواصل</h2><p><a href="mailto:${mail}" dir="ltr">${mail}</a></p>` : "",
     },
     repo: {
       en: repo ? ` Source code: <a href="${repo}" rel="noopener">${repo}</a>.` : "",
-      ar: repo ? ` الشيفرة المصدرية: <a href="${repo}" rel="noopener" dir="ltr">${repo}</a>.` : "",
     },
     removal: {
       en: mail ? ` To ask for the record to be removed, write to ${mail}.` : "",
-      ar: mail ? ` لطلب حذف هذا السجل، راسلنا على ${mail}.` : "",
     },
   };
 }
@@ -63,25 +59,6 @@ const PAGES = {
 <p>The code of contextatk is open source.${x.repo.en}</p>
 <p>See also the <a href="/privacy">Privacy Policy</a>, the <a href="/terms">Terms of Use</a> and the <a href="/cookies">Cookie Policy</a>.</p>
 ${x.contact.en}`,
-    ar: (x) => `<h1>عن contextatk</h1>
-<p>contextatk (نسخة تجريبية beta) مكان تحفظ فيه سياقك الخاص: ملاحظات قصيرة من اسم وقيمة، مثل لغتك أو عملك أو الطريقة التي تفضّل أن تُكتب بها الإجابات. تنشئ سياقًا وتحصل على رابط خاص، وتعطي الرابط لأي نموذج ذكاء اصطناعي يستطيع فتح الروابط. يقرأ النموذج ملاحظاتك (للقراءة فقط) ويمكنه استخدامها لتخصيص إجاباته.</p>
-<h2>كيف يعمل</h2>
-<ol>
-<li>سجّل الدخول بحساب جوجل.</li>
-<li>أنشئ سياقًا وأضف مدخلاتك.</li>
-<li>انسخ الرابط الخاص. يظهر مرة واحدة فقط.</li>
-<li>الصق الرابط في نموذج ذكاء اصطناعي.${PIN_UI ? " يمكنك حماية السياق برمز PIN اختياري من 7 أرقام." : ""}</li>
-</ol>
-<h2>الحدود في النسخة التجريبية</h2>
-<ul>
-<li>500 كيلوبايت من المساحة لكل حساب، تتشاركها كل سياقاتك.</li>
-<li>100 كيلوبايت للقيمة الواحدة، وحتى 10 سياقات لكل حساب.</li>
-<li>تُحذف السياقات بعد 30 يومًا من آخر تسجيل دخول.</li>
-</ul>
-<h2>مفتوح المصدر</h2>
-<p>شيفرة contextatk مفتوحة المصدر.${x.repo.ar}</p>
-<p>اطّلع أيضًا على <a href="/privacy">سياسة الخصوصية</a> و<a href="/terms">شروط الاستخدام</a> و<a href="/cookies">سياسة ملفات تعريف الارتباط</a>.</p>
-${x.contact.ar}`,
   },
 
   privacy: {
@@ -123,42 +100,6 @@ ${x.contact.ar}`,
 <h2>Changes</h2>
 <p>This policy may be updated. The date at the top shows the latest version.</p>
 ${x.contact.en}`,
-    ar: (x) => `<h1>سياسة الخصوصية</h1>
-<p class="muted">${UPDATED.ar}</p>
-<p>توضّح هذه السياسة ما الذي يخزّنه contextatk (نسخة تجريبية beta) وكيف يُستخدم.</p>
-<h2>ما الذي يُخزَّن</h2>
-<ul>
-<li><strong>الحساب:</strong> معرّف تعطينا إياه جوجل لحسابك، وبريدك الإلكتروني واسمك كما تقدمهما جوجل (يُحدَّثان عند كل تسجيل دخول)، وحالة الحساب، ووقت أول وآخر تسجيل دخول. نطلب من جوجل النطاقات "openid" و"email" و"profile".</li>
-<li><strong>السياقات:</strong> اسم السياق الاختياري، ووقت الإنشاء، ورمز PIN إن وضعته، وبصمة (hash) لرمز الرابط وليس الرابط نفسه.</li>
-<li><strong>المدخلات:</strong> الأسماء والقيم التي تكتبها، وحجمها، ووقت آخر تعديل.</li>
-<li><strong>محاولات PIN:</strong> عدد محاولات PIN الخاطئة لكل سياق وساعة، ويُحفظ مدة قصيرة لتطبيق القفل.</li>
-</ul>
-<p>تُخزَّن المدخلات كنص عادي. فهي غير مشفّرة، ورمز PIN يُخزَّن كنص عادي أيضًا. لا تخزّن كلمات المرور ولا أرقام بطاقات الدفع ولا أي أسرار أخرى.</p>
-<h2>كيف تُستخدم</h2>
-<p>يُستخدم بريدك الإلكتروني واسمك فقط ليتمكن من يدير الخدمة من العثور على حسابك لتقديم الدعم، أو لتعليقه أو إعادة تفعيله. يظهران في صفحة إدارة خاصة، ولا يظهران لأعضاء آخرين، ولا يُستخدمان للتسويق. وكل ما عدا ذلك يُستخدم فقط لتشغيل الخدمة: لعرض بياناتك لك، وتسليمها لمن يفتح رابطك (ويُدخل الـ PIN إن وُجد)، وتطبيق الحدود، وحذف البيانات غير النشطة. لا إعلانات ولا تحليلات ولا سكربتات تتبّع، ولا تُباع البيانات.</p>
-<h2>من يستطيع قراءة بياناتك</h2>
-<ul>
-<li>كل من معه رابط السياق، ورمز PIN إن وُجد، يستطيع قراءة كل مدخلات ذلك السياق. إذا لصقت رابطًا في خدمة ذكاء اصطناعي فإنها تستلم المدخلات، وتنطبق سياساتها على ما تفعله بها.</li>
-<li>يظهر الرابط مرة واحدة عند إنشائه. تُخزَّن بصمته فقط، فلا يمكن عرضه ثانية. إنشاء رابط جديد يوقف الرابط القديم.</li>
-<li>رمز PIN من 7 أرقام واختياري. بعد 10 محاولات PIN خاطئة لسياق واحد خلال ساعة يُقفل ذلك السياق حتى الساعة التالية.</li>
-<li>يستطيع من يدير الخدمة الوصول إلى قاعدة البيانات التي تحتوي هذه البيانات.</li>
-</ul>
-<h2>تسجيل الدخول بجوجل</h2>
-<p>جوجل هي الطريقة الوحيدة لتسجيل الدخول. تعالج جوجل تسجيل دخولك وفق سياسة الخصوصية الخاصة بها. نحن نستلم معرّف الحساب وبريدك الإلكتروني واسمك.</p>
-<h2>ملفات تعريف الارتباط والتخزين المحلي</h2>
-<p>تُستخدم ملفات تعريف الارتباط الأساسية فقط. راجع <a href="/cookies">سياسة ملفات تعريف الارتباط</a>.</p>
-<h2>الاستضافة</h2>
-<p>تعمل الخدمة على Cloudflare (Workers وقاعدة بيانات D1). تعالج Cloudflare الطلبات بصفتها مزوّد الاستضافة وقد تحتفظ بسجلاتها المعتادة. لا تكتب الخدمة محتوى مدخلاتك في السجلات.</p>
-<h2>الاحتفاظ والحذف</h2>
-<ul>
-<li>يمكنك حذف سياق أو مدخل في أي وقت، ويُزال فورًا.</li>
-<li>بعد 30 يومًا من آخر تسجيل دخول تُحذف كل سياقاتك ومدخلاتك تلقائيًا بمهمة يومية.</li>
-<li>يبقى بعد ذلك سجل عضوية صغير (معرّف الحساب والبريد الإلكتروني والاسم والحالة ووقت أول وآخر تسجيل دخول)، مع سجل لتغييرات الحالة (معرّف الحساب والوقت والحالة القديمة والجديدة). لا يوجد حذف ذاتي للحساب في النسخة التجريبية.${x.removal.ar}</li>
-<li>إذا عُلّق حساب: لا يستطيع العضو تسجيل الدخول، وتعرض روابط سياقاته لا شيء، ولا يستطيع قراءة بياناته أو تعديلها. التعليق نفسه لا يحذف شيئًا، وإعادة تفعيل الحساب تعيد كل شيء. يبقى حذف الـ 30 يومًا محسوبًا من آخر تسجيل دخول قبل التعليق.</li>
-</ul>
-<h2>التغييرات</h2>
-<p>قد تُحدَّث هذه السياسة. يوضّح التاريخ في أعلاها آخر نسخة.</p>
-${x.contact.ar}`,
   },
 
   terms: {
@@ -189,31 +130,6 @@ ${x.contact.ar}`,
 <h2>Changes</h2>
 <p>These terms may be updated. The date at the top shows the latest version. If you keep using the service after a change, you accept the new terms.</p>
 ${x.contact.en}`,
-    ar: (x) => `<h1>شروط الاستخدام</h1>
-<p class="muted">${UPDATED.ar}</p>
-<p>باستخدامك contextatk فإنك توافق على هذه الشروط.</p>
-<h2>النسخة التجريبية</h2>
-<p>contextatk نسخة تجريبية (beta). تُقدَّم كما هي ودون ضمانات. قد تتغير أو تتوقف أو تنقطع، وقد تضيع البيانات. احتفظ بنسخة خاصة بك من كل ما تحتاجه.</p>
-<h2>حسابك وروابطك</h2>
-<ul>
-<li>تسجّل الدخول بحساب جوجل.</li>
-<li>أنت المسؤول عن روابطك ورموز PIN. كل من معه رابط السياق، ورمز PIN إن وُجد، يستطيع قراءة ذلك السياق.</li>
-</ul>
-<h2>محتواك</h2>
-<ul>
-<li>أنت المسؤول عمّا تخزّنه. خزّن فقط ما لديك الحق في تخزينه.</li>
-<li>المدخلات غير مشفّرة. لا تخزّن كلمات المرور ولا أرقام بطاقات الدفع ولا أرقام الهوية ولا أي أسرار أخرى.</li>
-<li>لا تسئ استخدام الخدمة: لا هجمات ولا طلبات مفرطة ولا محاولات تخمين للروابط أو رموز PIN.</li>
-</ul>
-<h2>الحدود والحذف</h2>
-<p>الحدود هي: 500 كيلوبايت من المساحة لكل حساب، و100 كيلوبايت للقيمة الواحدة، و10 سياقات لكل حساب. وقد تتغير أثناء النسخة التجريبية. تُحذف السياقات والمدخلات بعد 30 يومًا من آخر تسجيل دخول. التفاصيل في <a href="/privacy">سياسة الخصوصية</a>.</p>
-<h2>الإيقاف</h2>
-<p>يجوز إيقاف أو إزالة أي حساب أو محتوى يخالف هذه الشروط أو يضر بالخدمة. أثناء تعليق الحساب لا يستطيع العضو تسجيل الدخول، وتعرض روابط سياقاته لا شيء، ولا يستطيع قراءة بياناته أو تعديلها. التعليق نفسه لا يحذف شيئًا، وإعادة تفعيل الحساب تعيد كل شيء. يبقى حذف الـ 30 يومًا محسوبًا من آخر تسجيل دخول قبل التعليق.</p>
-<h2>المسؤولية</h2>
-<p>بالقدر الذي يسمح به القانون، لا يتحمل من يدير الخدمة مسؤولية الخسائر الناتجة عن استخدام النسخة التجريبية، بما فيها ضياع البيانات والكشف عن رابط شاركته.</p>
-<h2>التغييرات</h2>
-<p>قد تُحدَّث هذه الشروط. يوضّح التاريخ في أعلاها آخر نسخة. استمرارك في استخدام الخدمة بعد التغيير يعني قبولك للشروط الجديدة.</p>
-${x.contact.ar}`,
   },
 
   cookies: {
@@ -233,32 +149,11 @@ ${x.contact.ar}`,
 <h2>Local storage and cache</h2>
 <p>These stay in your browser and are not sent to the server.</p>
 <ul>
-<li><span dir="ltr">lang</span>: the language you chose.</li>
 <li><span dir="ltr">notice</span>: that you closed the cookie notice.</li>
 <li>Offline cache: a copy of the app shell (page, script, styles, logo and an icon) so the page can open without a connection. It holds no account data and no contexts.</li>
 </ul>
 <p>See also the <a href="/privacy">Privacy Policy</a>.</p>
 ${x.contact.en}`,
-    ar: (x) => `<h1>سياسة ملفات تعريف الارتباط</h1>
-<p class="muted">${UPDATED.ar}</p>
-<p>يستخدم contextatk ملفات تعريف الارتباط الأساسية فقط. لا توجد ملفات إعلانات أو تحليلات أو ملفات من أطراف أخرى. ولأن هذه الملفات لازمة لعمل الخدمة فلا يوجد مفتاح لإيقافها. يمكنك مسحها من إعدادات متصفحك.</p>
-<h2>ملفات تعريف الارتباط</h2>
-<table>
-<thead><tr><th>الاسم</th><th>الغرض</th><th>المدة</th></tr></thead>
-<tbody>
-<tr><td dir="ltr">__Host-session</td><td>يُبقيك مسجّلًا دخولك. يحتوي معرّف حسابك ووقت انتهاء، وهو موقَّع فلا يمكن تعديله. وهو HttpOnly وSecure. تسجيل الخروج يزيله.</td><td>7 أيام</td></tr>
-<tr><td dir="ltr">__Host-oauth</td><td>يحمي خطوة تسجيل الدخول بجوجل. يوجد فقط أثناء تسجيل الدخول.</td><td>10 دقائق</td></tr>
-</tbody>
-</table>
-<h2>التخزين المحلي والذاكرة المؤقتة</h2>
-<p>تبقى هذه في متصفحك ولا تُرسل إلى الخادم.</p>
-<ul>
-<li><span dir="ltr">lang</span>: اللغة التي اخترتها.</li>
-<li><span dir="ltr">notice</span>: أنك أغلقت إشعار ملفات تعريف الارتباط.</li>
-<li>ذاكرة العمل دون اتصال: نسخة من هيكل التطبيق (الصفحة والسكربت والأنماط والشعار وأيقونة) ليفتح الموقع دون اتصال. لا تحتوي بيانات حساب ولا سياقات.</li>
-</ul>
-<p>اطّلع أيضًا على <a href="/privacy">سياسة الخصوصية</a>.</p>
-${x.contact.ar}`,
   },
 };
 
@@ -297,11 +192,10 @@ export function infoPage(slug, env, site, verifyTag) {
 <body>
   <header>
     <a class="brand" href="/"><img src="/logo.jpg" alt="" width="32" height="32"><span>contextatk <small>beta</small></span></a>
-    <nav><button id="theme" class="link" type="button" aria-label="Dark mode / الوضع الليلي" title="Dark mode / الوضع الليلي"></button><button id="lang" class="link" type="button">العربية</button></nav>
+    <nav><button id="theme" class="link" type="button" aria-label="Dark mode" title="Dark mode"></button></nav>
   </header>
   <main class="doc">
-    <article class="en" lang="en">${p.en(x)}</article>
-    <article class="ar" lang="ar" dir="rtl">${p.ar(x)}</article>
+    <article lang="en">${p.en(x)}</article>
   </main>
   ${FOOTER}
   <script src="/common.js" defer></script>

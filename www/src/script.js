@@ -1,6 +1,6 @@
 import { PIN_UI } from "./config.js";
 
-// The page script (UI, Arabic/English, calls /api/*). Served at /app.js.
+// The page script (UI, English only, calls /api/*). Served at /app.js.
 export const SCRIPT = `const T = {
   en: {
     tagline: "Keep your context in one private place and hand it to any AI model with a link.",
@@ -9,17 +9,25 @@ export const SCRIPT = `const T = {
     about2: "You get a private link. Paste it into any AI model that can open links.",
     about3: "The model reads your notes, read-only. You can add a 7-digit PIN, replace the link, or delete a context at any time.",
     about3_nopin: "The model reads your notes, read-only. You can replace the link or delete a context at any time.", use_plain_nopin: "Give the AI model the link as it is.",
-    signin: "Sign in with Google", signout: "Sign out", lang: "العربية",
+    signin: "Sign in with Google", signout: "Sign out",
     err_signin: "Sign-in did not work. Please try again.", err_suspended: "This account is suspended. You cannot sign in, and your links and data are unavailable until it is restored. Nothing is deleted by the suspension itself. Contact us if you need help.",
     beta: "This is a beta. Your contexts are deleted 30 days after your last sign-in.",
     quota: "Storage", of: "of", contexts: "Your contexts", newctx: "New context", ctxname: "Name (optional)",
     create: "Create", none: "No contexts yet. Create one to start.", entries: "entries", locked: "PIN",
     link_title: "Your private link", link_once: "You can copy this link from here at any time.",
     link_legacy: "This link was made before links could be shown again, so it cannot be displayed. Create a new link to get one you can copy here at any time. The old link stops working.",
-    link_note: "The link holds context the user entered in contextatk as central context to copy between AI models. Open the link, read what is in it, and use it when answering.",
-    link_howto: "Copy the text below and paste it as the first message to the model, then start typing your question.",
+    style_label: "Text style", format_label: "Output format",
+    style_standard: "Standard", style_background: "About me", style_preferences: "Preferences", style_reference: "Notes for a task", style_link: "Link only",
+    note_standard: "Here is a link to my saved context from contextatk. Please open it and read it, so you know my background when you answer.",
+    note_background: "I keep notes about myself in contextatk. This link opens them as plain text. Please read them for background on my questions.",
+    note_preferences: "This link opens my preferences for how I like answers written. Please take a look and keep them in mind.",
+    note_reference: "This link opens notes for what I am working on. Please read them first and use them as background for my questions.",
+    note_link: "",
+    fmt_txt: "txt (default)", fmt_md: "md", fmt_yaml: "yaml", fmt_json: "json",
+    use_format: "The format is the last part of the copied link (?format=txt, md, yaml or json). Change it in the box above, or edit the end of the link.",    link_howto: "Copy the text below and paste it as the first message to the model, then start typing your question.",
     copy: "Copy", copied: "Copied", close: "Close",
-    use_title: "How to use it", use_plain: "No PIN: give the AI model the link as it is.", use_pin: "With a PIN: the PIN goes at the end of the link after a slash (.../token/1234567). Give the model the full link.", use_json: "For JSON instead of text, add ?format=json at the very end.", use_pin_known: "The link above already includes your PIN.", use_pin_unknown: "This context has a PIN: add a slash and the PIN at the end of the link.",
+    use_title: "How to use it", use_plain: "No PIN: give the AI model the link as it is.", use_pin: "With a PIN: the PIN goes at the end of the link after a slash (.../token/1234567). Give the model the full link.", use_pin_known: "The link above already includes your PIN.", use_pin_unknown: "This context has a PIN: add a slash and the PIN at the end of the link.",
+    duplicate: "Duplicate this context", duplicated: "Copied. This is a separate context with its own link; changes to either one do not affect the other.",
     newlink: "Create a new link", newlink_confirm: "The old link will stop working. Continue?",
     pin: "PIN", pin_help: "Optional. 7 digits you choose. The PIN is added at the end of the link, after a slash.", pin_on: "A PIN is set.", pin_off: "No PIN.",
     pin_set: "Set PIN", pin_clear: "Remove PIN", pin_bad: "The PIN must be exactly 7 digits.",
@@ -31,42 +39,12 @@ export const SCRIPT = `const T = {
     e_not_member: "This account is not active.", e_signed_out: "Please sign in again.", e_unavailable: "Service unavailable. Try again.",
     e_not_found: "Not found.", e_internal: "Something went wrong. Try again.", e_forbidden: "Not allowed.",
   },
-  ar: {
-    tagline: "احفظ سياقك في مكان خاص واحد وسلّمه لأي نموذج ذكاء اصطناعي برابط.",
-    about_title: "كيف يعمل",
-    about1: "سجّل الدخول بحساب جوجل وأنشئ سياقًا: قائمة ملاحظات (اسم وقيمة)، مثل لغتك أو عملك.",
-    about2: "تحصل على رابط خاص. الصقه في أي نموذج ذكاء اصطناعي يستطيع فتح الروابط.",
-    about3: "يقرأ النموذج ملاحظاتك للقراءة فقط. يمكنك إضافة PIN من 7 أرقام أو تغيير الرابط أو حذف السياق في أي وقت.",
-    about3_nopin: "يقرأ النموذج ملاحظاتك للقراءة فقط. يمكنك تغيير الرابط أو حذف السياق في أي وقت.", use_plain_nopin: "أعطِ نموذج الذكاء الاصطناعي الرابط كما هو.",
-    signin: "الدخول بحساب جوجل", signout: "تسجيل الخروج", lang: "English",
-    err_signin: "تعذّر تسجيل الدخول. حاول مرة أخرى.", err_suspended: "هذا الحساب معلّق. لا يمكنك تسجيل الدخول، وروابطك وبياناتك غير متاحة إلى أن تتم إعادة تفعيله. التعليق نفسه لا يحذف شيئًا. تواصل معنا إذا احتجت مساعدة.",
-    beta: "هذه نسخة تجريبية (beta). تُحذف سياقاتك بعد 30 يومًا من آخر تسجيل دخول.",
-    quota: "المساحة", of: "من", contexts: "سياقاتك", newctx: "سياق جديد", ctxname: "الاسم (اختياري)",
-    create: "إنشاء", none: "لا توجد سياقات بعد. أنشئ واحدًا لتبدأ.", entries: "إدخالات", locked: "PIN",
-    link_title: "رابطك الخاص", link_once: "تقدر تنسخ الرابط من هنا في أي وقت.",
-    link_legacy: "الرابط ده اتعمل قبل ما نتيح إعادة عرض الروابط، فمش ممكن نعرضه تاني. اعمل رابطًا جديدًا عشان يبقى عندك رابط تقدر تنسخه من هنا في أي وقت. الرابط القديم هيتوقف عن العمل.",
-    link_note: "يحتوي الرابط على سياق أدخله المستخدم كسياق مركزي للنسخ بين النماذج. افتح الرابط واقرأ ما فيه واستخدمه عند الإجابة.",
-    link_howto: "انسخ النص التالي والصقه في أول رسالة للنموذج ثم ابدأ كتابة سؤالك.",
-    copy: "نسخ", copied: "تم النسخ", close: "إغلاق",
-    use_title: "طريقة الاستخدام", use_plain: "بدون PIN: أعطِ نموذج الذكاء الاصطناعي الرابط كما هو.", use_pin: "مع PIN: يوضع الـ PIN في نهاية الرابط بعد شرطة مائلة (.../token/1234567). أعطِ النموذج الرابط الكامل.", use_json: "للحصول على JSON بدل النص أضف ?format=json في آخر الرابط تمامًا.", use_pin_known: "الرابط أعلاه يتضمن الـ PIN الخاص بك.", use_pin_unknown: "هذا السياق له PIN: أضف شرطة مائلة ثم الـ PIN في نهاية الرابط.",
-    newlink: "إنشاء رابط جديد", newlink_confirm: "الرابط القديم سيتوقف عن العمل. متابعة؟",
-    pin: "PIN", pin_help: "اختياري. 7 أرقام من اختيارك. يُضاف الـ PIN في نهاية الرابط بعد شرطة مائلة.", pin_on: "يوجد PIN.", pin_off: "لا يوجد PIN.",
-    pin_set: "تعيين PIN", pin_clear: "إزالة PIN", pin_bad: "يجب أن يكون الـ PIN سبعة أرقام بالضبط.",
-    entries_title: "الإدخالات", name: "الاسم", value: "القيمة", add: "إضافة", save: "حفظ", edit: "تعديل", del: "حذف", cancel: "إلغاء",
-    entry_empty: "لا توجد إدخالات بعد.", del_ctx: "حذف هذا السياق", del_ctx_confirm: "حذف هذا السياق وكل إدخالاته؟",
-    del_entry_confirm: "حذف هذا الإدخال؟", saved: "تم الحفظ.",
-    e_quota_exceeded: "لا توجد مساحة كافية.", e_value_too_large: "القيمة كبيرة جدًا (الحد 100 KB).",
-    e_too_many_contexts: "وصلت للحد الأقصى من السياقات.", e_bad_request: "راجع ما كتبته.",
-    e_not_member: "هذا الحساب غير نشط.", e_signed_out: "سجّل الدخول مرة أخرى.", e_unavailable: "الخدمة غير متاحة. حاول مرة أخرى.",
-    e_not_found: "غير موجود.", e_internal: "حدث خطأ. حاول مرة أخرى.", e_forbidden: "غير مسموح.",
-  },
 };
 
-let lang = localStorage.getItem("lang") || ((navigator.language || "").startsWith("ar") ? "ar" : "en");
-const t = (k) => T[lang][k] ?? k;
+const t = (k) => T.en[k] ?? k;
 const PIN_UI = ${PIN_UI}; // the PIN box is hidden while this is false (see config.js); its code below is kept
 const app = document.getElementById("app");
-const state = { pins: {}, suspended: false, me: null, current: null, entries: [], editing: null, link: null, linkLegacy: false, msg: "" };
+const state = { pins: {}, suspended: false, me: null, current: null, entries: [], editing: null, link: null, linkLegacy: false, msg: "", style: "standard", format: "txt" };
 
 function el(tag, attrs, ...kids) {
   const n = document.createElement(tag);
@@ -184,17 +162,26 @@ function linkBox() {
   // A context from before links could be re-shown has no token to rebuild: say so plainly.
   if (!state.link) return el("div", { class: "notice" }, el("strong", {}, t("link_title")), el("p", { class: "small" }, t("link_legacy")));
   const url = state.me.readBase + state.link + (pin ? "/" + pin : "");
-  const text = url + (lang === "en" ? "?lang=en" : "") + "\\n\\n" + t("link_note"); // English page: ask the read endpoint for the English hint
-  const input = el("textarea", { rows: 5, readonly: true, "aria-label": t("link_title"), dir: "auto" }, text);
+  const STYLES = ["standard", "background", "preferences", "reference", "link"];
+  const FORMATS = ["txt", "md", "yaml", "json"];
+  // The copied text: the link ending in the chosen output format, then the chosen style of text.
+  const build = () => url + "?format=" + state.format + (state.style === "link" ? "" : "\\n\\n" + t("note_" + state.style));
+  const input = el("textarea", { rows: 5, readonly: true, "aria-label": t("link_title"), dir: "auto" }, build());
+  const pick = (id, label, key, values, prefix) => {
+    const sel = el("select", { id, "aria-label": t(label) }, values.map((v) => el("option", { value: v, selected: v === state[key] }, t(prefix + v))));
+    sel.addEventListener("change", () => { state[key] = sel.value; input.value = build(); });
+    return el("label", { class: "small", for: id }, t(label) + " ", sel);
+  };
   const copy = el("button", { class: "primary", onclick: async () => { await navigator.clipboard.writeText(input.value).catch(() => input.select()); copy.textContent = t("copied"); } }, t("copy"));
   return el("div", { class: "notice" },
     el("strong", {}, t("link_title")), el("p", { class: "small" }, t("link_once")),
     el("p", { class: "small" }, el("strong", {}, t("link_howto"))),
+    el("div", { class: "row gap" }, pick("fmt", "format_label", "format", FORMATS, "fmt_"), pick("sty", "style_label", "style", STYLES, "style_")),
     input,
     el("div", { class: "row gap" }, copy),
     el("p", { class: "small" }, el("strong", {}, t("use_title"))),
     el("ul", { class: "small" },
-      el("li", {}, t(PIN_UI ? "use_plain" : "use_plain_nopin")), PIN_UI && el("li", {}, t("use_pin")), el("li", {}, t("use_json")),
+      el("li", {}, t(PIN_UI ? "use_plain" : "use_plain_nopin")), PIN_UI && el("li", {}, t("use_pin")), el("li", {}, t("use_format")),
       PIN_UI && c && c.hasPin && el("li", {}, pin ? t("use_pin_known") : t("use_pin_unknown"))));
 }
 
@@ -239,6 +226,7 @@ function contextPanel() {
     (state.link || state.linkLegacy) && linkBox(),
     el("div", { class: "row" },
       el("button", { onclick: async () => { if (confirm(t("newlink_confirm"))) { const d = await act({ op: "context.rotate", context: c.id }); if (d) { state.link = d.token; render(); } } } }, t("newlink")),
+      el("button", { onclick: async () => { const d = await act({ op: "context.duplicate", context: c.id }); if (d) { state.current = d.context; state.link = d.token; state.editing = null; await load(); state.msg = ""; render(); } } }, t("duplicate")),
       el("button", { class: "danger", onclick: async () => { if (confirm(t("del_ctx_confirm")) && (await act({ op: "context.delete", context: c.id }))) { state.current = null; load(); } } }, t("del_ctx"))),
     PIN_UI && pinBox(c),
     el("h2", { class: "gap" }, t("entries_title")),
@@ -253,10 +241,7 @@ function contextPanel() {
 }
 
 function render() {
-  document.documentElement.lang = lang;
-  document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
-  const lb = document.getElementById("lang"); lb.textContent = t("lang");
-  const out = document.getElementById("logout"); out.textContent = t("signout"); out.hidden = !state.me;
+    const out = document.getElementById("logout"); out.textContent = t("signout"); out.hidden = !state.me;
   app.replaceChildren();
   if (!state.me) return app.append(signedOut());
   app.append(...[
@@ -265,7 +250,6 @@ function render() {
     quotaCard(), contextsCard(), contextPanel()].filter(Boolean));
 }
 
-document.getElementById("lang").addEventListener("click", () => { lang = lang === "ar" ? "en" : "ar"; localStorage.setItem("lang", lang); render(); });
 document.getElementById("logout").addEventListener("click", async () => { await fetch("/auth/logout", { method: "POST", credentials: "same-origin" }); state.me = null; state.current = null; render(); });
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});
 load();

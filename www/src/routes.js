@@ -6,6 +6,7 @@ const FIELDS = {
   "context.create": ["name"],
   "context.link": ["context"],
   "context.rotate": ["context"],
+  "context.duplicate": ["context"],
   "context.pin": ["context", "pin"],
   "context.delete": ["context"],
   "entry.set": ["context", "name", "value"],
