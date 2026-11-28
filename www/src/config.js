@@ -1,3 +1,7 @@
+// Feature switches. The PIN feature is hidden from the page since 28 Nov 2026 (user request);
+// its code is kept everywhere. Set this to true to show it again.
+export const PIN_UI = false;
+
 export const SESSION_SECONDS = 7 * 24 * 3600;
 export const LOGIN_TOUCH_SECONDS = 3600; // refresh last_login at most once an hour while active
 export const SESSION_COOKIE = "__Host-session";

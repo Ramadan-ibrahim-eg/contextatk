@@ -1,3 +1,5 @@
+import { PIN_UI } from "./config.js";
+
 // The page (HTML). Served at /. No inline script or style: the CSP forbids them.
 export const PAGE = `<!doctype html>
 <html lang="en">
@@ -5,7 +7,7 @@ export const PAGE = `<!doctype html>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>contextatk (beta): your context, one link for any AI model</title>
-  <meta name="description" content="Keep your context in one private place and hand it to any AI model with a link. Read-only, optional 7-digit PIN, sign in with Google. Beta.">
+  <meta name="description" content="Keep your context in one private place and hand it to any AI model with a link. Read-only${PIN_UI ? ", optional 7-digit PIN" : ""}, sign in with Google. Beta.">
   <link rel="canonical" href="{{SITE}}/">
   <meta name="robots" content="index, follow">
   <meta name="theme-color" content="#1f6feb">
@@ -50,7 +52,7 @@ export const PAGE = `<!doctype html>
       <ol>
         <li>Sign in with Google and create a context: a list of name and value notes, such as your language or your role.</li>
         <li>You get a private link. Paste it into any AI model that can open links.</li>
-        <li>The model reads your notes, read-only. You can add a 7-digit PIN, replace the link, or delete a context at any time.</li>
+        <li>The model reads your notes, read-only. You can ${PIN_UI ? "add a 7-digit PIN, " : ""}replace the link, or delete a context at any time.</li>
       </ol>
     </section>
   </main>

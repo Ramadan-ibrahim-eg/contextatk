@@ -1,3 +1,5 @@
+import { PIN_UI } from "./config.js";
+
 // The page script (UI, Arabic/English, calls /api/*). Served at /app.js.
 export const SCRIPT = `const T = {
   en: {
@@ -6,6 +8,7 @@ export const SCRIPT = `const T = {
     about1: "Sign in with Google and create a context: a list of name and value notes, such as your language or your role.",
     about2: "You get a private link. Paste it into any AI model that can open links.",
     about3: "The model reads your notes, read-only. You can add a 7-digit PIN, replace the link, or delete a context at any time.",
+    about3_nopin: "The model reads your notes, read-only. You can replace the link or delete a context at any time.", use_plain_nopin: "Give the AI model the link as it is.",
     signin: "Sign in with Google", signout: "Sign out", lang: "العربية",
     err_signin: "Sign-in did not work. Please try again.", err_suspended: "This account is suspended. You cannot sign in, and your links and data are unavailable until it is restored. Nothing is deleted by the suspension itself. Contact us if you need help.",
     beta: "This is a beta. Your contexts are deleted 30 days after your last sign-in.",
@@ -33,6 +36,7 @@ export const SCRIPT = `const T = {
     about1: "سجّل الدخول بحساب جوجل وأنشئ سياقًا: قائمة ملاحظات (اسم وقيمة)، مثل لغتك أو عملك.",
     about2: "تحصل على رابط خاص. الصقه في أي نموذج ذكاء اصطناعي يستطيع فتح الروابط.",
     about3: "يقرأ النموذج ملاحظاتك للقراءة فقط. يمكنك إضافة PIN من 7 أرقام أو تغيير الرابط أو حذف السياق في أي وقت.",
+    about3_nopin: "يقرأ النموذج ملاحظاتك للقراءة فقط. يمكنك تغيير الرابط أو حذف السياق في أي وقت.", use_plain_nopin: "أعطِ نموذج الذكاء الاصطناعي الرابط كما هو.",
     signin: "الدخول بحساب جوجل", signout: "تسجيل الخروج", lang: "English",
     err_signin: "تعذّر تسجيل الدخول. حاول مرة أخرى.", err_suspended: "هذا الحساب معلّق. لا يمكنك تسجيل الدخول، وروابطك وبياناتك غير متاحة إلى أن تتم إعادة تفعيله. التعليق نفسه لا يحذف شيئًا. تواصل معنا إذا احتجت مساعدة.",
     beta: "هذه نسخة تجريبية (beta). تُحذف سياقاتك بعد 30 يومًا من آخر تسجيل دخول.",
@@ -58,6 +62,7 @@ export const SCRIPT = `const T = {
 
 let lang = localStorage.getItem("lang") || ((navigator.language || "").startsWith("ar") ? "ar" : "en");
 const t = (k) => T[lang][k] ?? k;
+const PIN_UI = ${PIN_UI}; // the PIN box is hidden while this is false (see config.js); its code below is kept
 const app = document.getElementById("app");
 const state = { pins: {}, suspended: false, me: null, current: null, entries: [], editing: null, link: null, msg: "" };
 
@@ -116,7 +121,7 @@ function signedOut() {
     el("p", { class: "muted small" }, t("beta"))),
     el("section", { class: "about" },
       el("h2", {}, t("about_title")),
-      el("ol", {}, el("li", {}, t("about1")), el("li", {}, t("about2")), el("li", {}, t("about3")))));
+      el("ol", {}, el("li", {}, t("about1")), el("li", {}, t("about2")), el("li", {}, t(PIN_UI ? "about3" : "about3_nopin")))));
 }
 
 function quotaCard() {
@@ -139,15 +144,15 @@ function contextsCard() {
     state.me.contexts.map((c) =>
       el("button", { class: "ctx", "aria-current": String(c.id === state.current), onclick: () => { state.current = c.id; state.link = null; state.editing = null; state.msg = ""; load(); } },
         el("span", {}, c.name || "—"),
-        el("span", { class: "muted small" }, \`\${c.entries} \${t("entries")}\${c.hasPin ? " · " + t("locked") : ""}\`))),
+        el("span", { class: "muted small" }, \`\${c.entries} \${t("entries")}\${PIN_UI && c.hasPin ? " · " + t("locked") : ""}\`))),
     el("div", { class: "row" }, el("div", { class: "grow" }, nameInput), el("button", { class: "primary", onclick: create }, t("newctx"))));
 }
 
 function linkBox() {
   const c = state.me.contexts.find((x) => x.id === state.current);
-  const pin = c && c.hasPin ? state.pins[c.id] : null;
+  const pin = PIN_UI && c && c.hasPin ? state.pins[c.id] : null;
   const url = state.me.readBase + state.link + (pin ? "/" + pin : "");
-  const text = url + "\\n\\n" + t("link_note");
+  const text = url + (lang === "en" ? "?lang=en" : "") + "\\n\\n" + t("link_note"); // English page: ask the read endpoint for the English hint
   const input = el("textarea", { rows: 5, readonly: true, "aria-label": t("link_title"), dir: "auto" }, text);
   const copy = el("button", { class: "primary", onclick: async () => { await navigator.clipboard.writeText(input.value).catch(() => input.select()); copy.textContent = t("copied"); } }, t("copy"));
   return el("div", { class: "notice" },
@@ -157,10 +162,11 @@ function linkBox() {
     el("div", { class: "row gap" }, copy, el("button", { onclick: () => { state.link = null; render(); } }, t("close"))),
     el("p", { class: "small" }, el("strong", {}, t("use_title"))),
     el("ul", { class: "small" },
-      el("li", {}, t("use_plain")), el("li", {}, t("use_pin")), el("li", {}, t("use_json")),
-      c && c.hasPin && el("li", {}, pin ? t("use_pin_known") : t("use_pin_unknown"))));
+      el("li", {}, t(PIN_UI ? "use_plain" : "use_plain_nopin")), PIN_UI && el("li", {}, t("use_pin")), el("li", {}, t("use_json")),
+      PIN_UI && c && c.hasPin && el("li", {}, pin ? t("use_pin_known") : t("use_pin_unknown"))));
 }
 
+// Hidden while PIN_UI is false (28 Nov 2026). Code kept so the feature can be turned back on.
 function pinBox(c) {
   const pin = el("input", { inputmode: "numeric", maxlength: 7, pattern: "[0-9]{7}", placeholder: "0000000", dir: "ltr", "aria-label": t("pin") });
   return el("div", {},
@@ -202,7 +208,7 @@ function contextPanel() {
     el("div", { class: "row" },
       el("button", { onclick: async () => { if (confirm(t("newlink_confirm"))) { const d = await act({ op: "context.rotate", context: c.id }); if (d) { state.link = d.token; render(); } } } }, t("newlink")),
       el("button", { class: "danger", onclick: async () => { if (confirm(t("del_ctx_confirm")) && (await act({ op: "context.delete", context: c.id }))) { state.current = null; load(); } } }, t("del_ctx"))),
-    pinBox(c),
+    PIN_UI && pinBox(c),
     el("h2", { class: "gap" }, t("entries_title")),
     state.entries.length === 0 && el("p", { class: "muted" }, t("entry_empty")),
     state.entries.map((e) => entryRow(c, e)),

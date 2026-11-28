@@ -2,6 +2,8 @@
 // the page shows the language chosen with the language button (CSS keyed on <html lang>). Served at /about, /privacy, /terms, /cookies.
 // The text describes what the code really does. If the code changes, update the text.
 
+import { PIN_UI } from "./config.js";
+
 const UPDATED = { en: "Last updated: 26 November 2026", ar: "آخر تحديث: 26 نوفمبر 2026" };
 
 // Footer on every view (landing page, app and these pages).
@@ -49,7 +51,7 @@ const PAGES = {
 <li>Sign in with Google.</li>
 <li>Create a context and add your entries.</li>
 <li>Copy the private link. It is shown once.</li>
-<li>Paste the link into an AI model. You can protect a context with an optional 7-digit PIN.</li>
+<li>Paste the link into an AI model.${PIN_UI ? " You can protect a context with an optional 7-digit PIN." : ""}</li>
 </ol>
 <h2>Limits in the beta</h2>
 <ul>
@@ -68,7 +70,7 @@ ${x.contact.en}`,
 <li>سجّل الدخول بحساب جوجل.</li>
 <li>أنشئ سياقًا وأضف مدخلاتك.</li>
 <li>انسخ الرابط الخاص. يظهر مرة واحدة فقط.</li>
-<li>الصق الرابط في نموذج ذكاء اصطناعي. يمكنك حماية السياق برمز PIN اختياري من 7 أرقام.</li>
+<li>الصق الرابط في نموذج ذكاء اصطناعي.${PIN_UI ? " يمكنك حماية السياق برمز PIN اختياري من 7 أرقام." : ""}</li>
 </ol>
 <h2>الحدود في النسخة التجريبية</h2>
 <ul>
