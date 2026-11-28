@@ -14,7 +14,8 @@ export const SCRIPT = `const T = {
     beta: "This is a beta. Your contexts are deleted 30 days after your last sign-in.",
     quota: "Storage", of: "of", contexts: "Your contexts", newctx: "New context", ctxname: "Name (optional)",
     create: "Create", none: "No contexts yet. Create one to start.", entries: "entries", locked: "PIN",
-    link_title: "Your private link", link_once: "Copy it now. For your safety it is shown only once. If you lose it, create a new link.",
+    link_title: "Your private link", link_once: "You can copy this link from here at any time.",
+    link_legacy: "This link was made before links could be shown again, so it cannot be displayed. Create a new link to get one you can copy here at any time. The old link stops working.",
     link_note: "The link holds context the user entered in contextatk as central context to copy between AI models. Open the link, read what is in it, and use it when answering.",
     link_howto: "Copy the text below and paste it as the first message to the model, then start typing your question.",
     copy: "Copy", copied: "Copied", close: "Close",
@@ -42,7 +43,8 @@ export const SCRIPT = `const T = {
     beta: "هذه نسخة تجريبية (beta). تُحذف سياقاتك بعد 30 يومًا من آخر تسجيل دخول.",
     quota: "المساحة", of: "من", contexts: "سياقاتك", newctx: "سياق جديد", ctxname: "الاسم (اختياري)",
     create: "إنشاء", none: "لا توجد سياقات بعد. أنشئ واحدًا لتبدأ.", entries: "إدخالات", locked: "PIN",
-    link_title: "رابطك الخاص", link_once: "انسخه الآن. لأمانك يظهر مرة واحدة فقط. لو ضاع أنشئ رابطًا جديدًا.",
+    link_title: "رابطك الخاص", link_once: "تقدر تنسخ الرابط من هنا في أي وقت.",
+    link_legacy: "الرابط ده اتعمل قبل ما نتيح إعادة عرض الروابط، فمش ممكن نعرضه تاني. اعمل رابطًا جديدًا عشان يبقى عندك رابط تقدر تنسخه من هنا في أي وقت. الرابط القديم هيتوقف عن العمل.",
     link_note: "يحتوي الرابط على سياق أدخله المستخدم كسياق مركزي للنسخ بين النماذج. افتح الرابط واقرأ ما فيه واستخدمه عند الإجابة.",
     link_howto: "انسخ النص التالي والصقه في أول رسالة للنموذج ثم ابدأ كتابة سؤالك.",
     copy: "نسخ", copied: "تم النسخ", close: "إغلاق",
@@ -64,7 +66,7 @@ let lang = localStorage.getItem("lang") || ((navigator.language || "").startsWit
 const t = (k) => T[lang][k] ?? k;
 const PIN_UI = ${PIN_UI}; // the PIN box is hidden while this is false (see config.js); its code below is kept
 const app = document.getElementById("app");
-const state = { pins: {}, suspended: false, me: null, current: null, entries: [], editing: null, link: null, msg: "" };
+const state = { pins: {}, suspended: false, me: null, current: null, entries: [], editing: null, link: null, linkLegacy: false, msg: "" };
 
 function el(tag, attrs, ...kids) {
   const n = document.createElement(tag);
@@ -87,22 +89,50 @@ async function call(path, body) {
 }
 const errText = (data) => t("e_" + (data && data.error)) !== "e_" + (data && data.error) ? t("e_" + data.error) : t("e_internal");
 
+// A 401 on its own does not prove the session ended (a server problem can answer 401 too),
+// so ask /api/me: only its answer sends the user back to the sign-in page.
+async function sessionGone(data) {
+  const r = await call("/api/me");
+  if (r.status === 200 && r.data && Array.isArray(r.data.contexts)) { state.me = r.data; return false; }
+  state.me = null;
+  state.suspended = !!((r.data && r.data.error === "suspended") || (data && data.error === "suspended"));
+  render();
+  return true;
+}
+
 async function act(body) {
   const { status, data } = await call("/api/do", body);
-  if (status === 401) { state.me = null; state.suspended = !!(data && data.error === "suspended"); render(); return null; }
-  if (!data.ok) { state.msg = errText(data); render(); return null; }
+  if (status === 401) {
+    if (await sessionGone(data)) return null;
+    state.msg = t("e_unavailable"); render(); return null;
+  }
+  if (!data || !data.ok) { state.msg = errText(data); render(); return null; }
   state.msg = "";
   return data;
 }
 
 async function load() {
-  const { status, data } = await call("/api/me");
-  if (status === 401 || (data && data.error === "signed_out")) { state.me = null; state.suspended = !!(data && data.error === "suspended"); return render(); }
+  const good = (d) => !!d && Array.isArray(d.contexts);
+  let r = await call("/api/me");
+  // One retry before believing a failure: a hiccup must not look like a sign-out.
+  if (!good(r.data) && !(r.data && (r.data.error === "signed_out" || r.data.error === "suspended"))) {
+    await new Promise((ok) => setTimeout(ok, 1200));
+    r = await call("/api/me");
+  }
+  const data = r.data;
+  if (r.status === 401 || (data && (data.error === "signed_out" || data.error === "suspended"))) {
+    state.me = null; state.suspended = !!(data && data.error === "suspended"); return render();
+  }
+  if (!good(data)) { state.msg = t("e_unavailable"); return render(); }
   state.me = data;
   if (state.current && !data.contexts.some((c) => c.id === state.current)) state.current = null;
   if (state.current) {
-    const r = await call("/api/entries?context=" + encodeURIComponent(state.current));
-    state.entries = r.data.entries || [];
+    const r2 = await call("/api/entries?context=" + encodeURIComponent(state.current));
+    state.entries = r2.data.entries || [];
+    // The link is fetched every time a context is opened, so it is always at hand.
+    const l = await call("/api/do", { op: "context.link", context: state.current });
+    state.link = l.data && l.data.ok && l.data.token ? l.data.token : null;
+    state.linkLegacy = !!(l.data && l.data.legacy);
   }
   render();
 }
@@ -116,7 +146,7 @@ function signedOut() {
     el("img", { src: "/logo.jpg", alt: "", width: 96, height: 96 }),
     el("h1", {}, "contextatk"),
     el("p", { class: "muted" }, t("tagline")),
-    (err || state.suspended) && el("p", { class: "error" }, err === "suspended" || state.suspended ? t("err_suspended") : t("err_signin")),
+    (err || state.suspended || state.msg) && el("p", { class: "error" }, err === "suspended" || state.suspended ? t("err_suspended") : (state.msg || t("err_signin"))),
     el("a", { class: "btn primary", href: "/auth/login" }, t("signin")),
     el("p", { class: "muted small" }, t("beta"))),
     el("section", { class: "about" },
@@ -142,7 +172,7 @@ function contextsCard() {
     el("h2", {}, t("contexts")),
     state.me.contexts.length === 0 && el("p", { class: "muted" }, t("none")),
     state.me.contexts.map((c) =>
-      el("button", { class: "ctx", "aria-current": String(c.id === state.current), onclick: () => { state.current = c.id; state.link = null; state.editing = null; state.msg = ""; load(); } },
+      el("button", { class: "ctx", "aria-current": String(c.id === state.current), onclick: () => { state.current = c.id; state.link = null; state.linkLegacy = false; state.editing = null; state.msg = ""; load(); } },
         el("span", {}, c.name || "—"),
         el("span", { class: "muted small" }, \`\${c.entries} \${t("entries")}\${PIN_UI && c.hasPin ? " · " + t("locked") : ""}\`))),
     el("div", { class: "row" }, el("div", { class: "grow" }, nameInput), el("button", { class: "primary", onclick: create }, t("newctx"))));
@@ -151,6 +181,8 @@ function contextsCard() {
 function linkBox() {
   const c = state.me.contexts.find((x) => x.id === state.current);
   const pin = PIN_UI && c && c.hasPin ? state.pins[c.id] : null;
+  // A context from before links could be re-shown has no token to rebuild: say so plainly.
+  if (!state.link) return el("div", { class: "notice" }, el("strong", {}, t("link_title")), el("p", { class: "small" }, t("link_legacy")));
   const url = state.me.readBase + state.link + (pin ? "/" + pin : "");
   const text = url + (lang === "en" ? "?lang=en" : "") + "\\n\\n" + t("link_note"); // English page: ask the read endpoint for the English hint
   const input = el("textarea", { rows: 5, readonly: true, "aria-label": t("link_title"), dir: "auto" }, text);
@@ -159,7 +191,7 @@ function linkBox() {
     el("strong", {}, t("link_title")), el("p", { class: "small" }, t("link_once")),
     el("p", { class: "small" }, el("strong", {}, t("link_howto"))),
     input,
-    el("div", { class: "row gap" }, copy, el("button", { onclick: () => { state.link = null; render(); } }, t("close"))),
+    el("div", { class: "row gap" }, copy),
     el("p", { class: "small" }, el("strong", {}, t("use_title"))),
     el("ul", { class: "small" },
       el("li", {}, t(PIN_UI ? "use_plain" : "use_plain_nopin")), PIN_UI && el("li", {}, t("use_pin")), el("li", {}, t("use_json")),
@@ -204,7 +236,7 @@ function contextPanel() {
   const v = el("textarea", { "aria-label": t("value"), dir: "auto" });
   return el("div", { class: "card" },
     el("h1", {}, c.name || "—"),
-    state.link && linkBox(),
+    (state.link || state.linkLegacy) && linkBox(),
     el("div", { class: "row" },
       el("button", { onclick: async () => { if (confirm(t("newlink_confirm"))) { const d = await act({ op: "context.rotate", context: c.id }); if (d) { state.link = d.token; render(); } } } }, t("newlink")),
       el("button", { class: "danger", onclick: async () => { if (confirm(t("del_ctx_confirm")) && (await act({ op: "context.delete", context: c.id }))) { state.current = null; load(); } } }, t("del_ctx"))),

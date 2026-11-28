@@ -35,7 +35,7 @@ export default {
     } catch {
       return json(400, { ok: false, error: "bad_request" });
     }
-    const r = await runOp(env.DB, body, Math.floor(Date.now() / 1000));
+    const r = await runOp(env, body, Math.floor(Date.now() / 1000));
     return json(r.status, r.body);
   },
 

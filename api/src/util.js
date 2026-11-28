@@ -21,3 +21,16 @@ export async function safeEqual(a, b) {
 }
 
 export const hourOf = (now) => Math.floor(now / 3600);
+
+// Random salt for a context's link (hex). Not secret: without TOKEN_KEY it reveals nothing.
+export function randomHex(bytes = 16) {
+  return [...crypto.getRandomValues(new Uint8Array(bytes))].map((x) => x.toString(16).padStart(2, "0")).join("");
+}
+
+// base64url HMAC-SHA256. Used to derive a context's link token from a server secret,
+// so the owner can see the link again while nothing in the clear is stored.
+export async function hmacB64u(key, msg) {
+  const k = await crypto.subtle.importKey("raw", enc.encode(key), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const sig = await crypto.subtle.sign("HMAC", k, enc.encode(msg));
+  return btoa(String.fromCharCode(...new Uint8Array(sig))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}

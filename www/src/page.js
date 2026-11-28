@@ -1,7 +1,36 @@
 import { PIN_UI } from "./config.js";
 
 // The page (HTML). Served at /. No inline script or style: the CSP forbids them.
-export const PAGE = `<!doctype html>
+//
+// Two bodies: the landing content for a visitor with no session (also what search engines and
+// AI tools read), and a short app shell for a member who is signed in. The member must never
+// see "Sign in with Google" while the page is still loading: that flash looked like a session
+// that had dropped, and it is also what a reader without JavaScript sees.
+const LANDING = `
+    <section class="hero">
+      <img src="/logo.jpg" alt="" width="96" height="96">
+      <h1>contextatk</h1>
+      <p class="muted">Keep your context in one private place and hand it to any AI model with a link.</p>
+      <a class="btn primary" href="/auth/login">Sign in with Google</a>
+      <p class="muted small">This is a beta. Your contexts are deleted 30 days after your last sign-in.</p>
+    </section>
+    <section class="about">
+      <h2>How it works</h2>
+      <ol>
+        <li>Sign in with Google and create a context: a list of name and value notes, such as your language or your role.</li>
+        <li>You get a private link. Paste it into any AI model that can open links.</li>
+        <li>The model reads your notes, read-only. You can ${PIN_UI ? "add a 7-digit PIN, " : ""}replace the link, or delete a context at any time.</li>
+      </ol>
+    </section>`;
+
+const APP = `
+    <section class="hero">
+      <img src="/logo.jpg" alt="" width="96" height="96">
+      <h1>contextatk</h1>
+      <p class="muted"><span class="en">Loading your contexts…</span><span class="ar">جارٍ تحميل سياقاتك…</span></p>
+    </section>`;
+
+export const PAGE = (app) => `<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -38,23 +67,7 @@ export const PAGE = `<!doctype html>
     <a class="brand" href="/"><img src="/logo.jpg" alt="" width="32" height="32"><span>contextatk <small>beta</small></span></a>
     <nav><button id="theme" class="link" type="button" aria-label="Dark mode / الوضع الليلي" title="Dark mode / الوضع الليلي"></button><button id="lang" class="link" type="button"></button><button id="logout" class="link" type="button" hidden></button></nav>
   </header>
-  <main id="app" aria-live="polite">
-    <!-- Landing content for search engines and AI tools. The script replaces it. -->
-    <section class="hero">
-      <img src="/logo.jpg" alt="" width="96" height="96">
-      <h1>contextatk</h1>
-      <p class="muted">Keep your context in one private place and hand it to any AI model with a link.</p>
-      <a class="btn primary" href="/auth/login">Sign in with Google</a>
-      <p class="muted small">This is a beta. Your contexts are deleted 30 days after your last sign-in.</p>
-    </section>
-    <section class="about">
-      <h2>How it works</h2>
-      <ol>
-        <li>Sign in with Google and create a context: a list of name and value notes, such as your language or your role.</li>
-        <li>You get a private link. Paste it into any AI model that can open links.</li>
-        <li>The model reads your notes, read-only. You can ${PIN_UI ? "add a 7-digit PIN, " : ""}replace the link, or delete a context at any time.</li>
-      </ol>
-    </section>
+  <main id="app" aria-live="polite">${app ? APP : LANDING}
   </main>
   {{FOOTER}}
   <script src="/common.js" defer></script>

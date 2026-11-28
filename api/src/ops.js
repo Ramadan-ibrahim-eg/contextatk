@@ -1,5 +1,5 @@
 import { LIMITS } from "./limits.js";
-import { byteLen, randomToken, sha256Hex } from "./util.js";
+import { byteLen, hmacB64u, randomHex, randomToken, sha256Hex } from "./util.js";
 
 const MEMBER_RE = /^[A-Za-z0-9_-]{1,64}$/;
 const ID_RE = /^[0-9a-f-]{36}$/;
@@ -38,41 +38,71 @@ async function owns(db, member, context) {
   return !!r;
 }
 
+// The link token is derived, never stored in the clear: HMAC(TOKEN_KEY, "v1.<context id>.<salt>").
+// The salt is random and is replaced on every rotate, so a new link is minted (and the old one dies)
+// while the owner can still see the current link at any time from the page.
+// Without TOKEN_KEY the old behaviour is kept: a random token, shown once, hash only.
+async function mintToken(env, context, salt) {
+  if (!env.TOKEN_KEY) return null;
+  return hmacB64u(env.TOKEN_KEY, `v1.${context}.${salt}`);
+}
+
 const OPS = {
-  async "context.create"(db, b, now) {
+  async "context.create"(env, b, now) {
+    const db = env.DB;
     const member = memberId(b.member);
     const name = b.name === undefined ? "" : str(b.name);
     if ([...name].length > LIMITS.CONTEXT_NAME_MAX_CHARS || CONTROL_RE.test(name)) throw bad();
     await requireActiveMember(db, member);
     const id = crypto.randomUUID();
-    const token = randomToken();
+    const salt = randomHex(16);
+    const token = (await mintToken(env, id, salt)) || randomToken();
     const r = await db
       .prepare(
-        `INSERT INTO contexts (id, member_id, name, token_hash, created_at)
-         SELECT ?1, ?2, ?3, ?4, ?5
-         WHERE (SELECT COUNT(*) FROM contexts WHERE member_id = ?2) < ?6`
+        `INSERT INTO contexts (id, member_id, name, token_hash, token_salt, created_at)
+         SELECT ?1, ?2, ?3, ?4, ?5, ?6
+         WHERE (SELECT COUNT(*) FROM contexts WHERE member_id = ?2) < ?7`
       )
-      .bind(id, member, name, await sha256Hex(token), now, LIMITS.CONTEXTS_PER_MEMBER)
+      .bind(id, member, name, await sha256Hex(token), salt, now, LIMITS.CONTEXTS_PER_MEMBER)
       .run();
     if (r.meta.changes !== 1) throw new Fail(409, "too_many_contexts");
-    // The only thing returned: the new context id and its secret token (shown once, never stored in clear).
+    // The new context id and its link token (the token itself is not stored in the clear).
     return { context: id, token };
   },
 
-  async "context.rotate"(db, b) {
+  // The current link of one of the member's own contexts, so the page can show it again.
+  // A context made before links were re-viewable has no salt: answer "legacy" and show
+  // the honest explanation instead of a link that cannot be rebuilt.
+  async "context.link"(env, b) {
+    const db = env.DB;
     const member = memberId(b.member);
     const context = contextId(b.context);
     await requireActiveMember(db, member);
-    const token = randomToken();
+    const row = await db.prepare("SELECT token_salt FROM contexts WHERE id = ?1 AND member_id = ?2").bind(context, member).first();
+    if (!row) throw new Fail(404, "not_found");
+    const token = row.token_salt ? await mintToken(env, context, row.token_salt) : null;
+    return token ? { token } : { legacy: true };
+  },
+
+  async "context.rotate"(env, b) {
+    const db = env.DB;
+    const member = memberId(b.member);
+    const context = contextId(b.context);
+    await requireActiveMember(db, member);
+    const salt = randomHex(16);
+    const token = (await mintToken(env, context, salt)) || randomToken();
     const [r] = await db.batch([
-      db.prepare("UPDATE contexts SET token_hash = ?1 WHERE id = ?2 AND member_id = ?3").bind(await sha256Hex(token), context, member),
+      db
+        .prepare("UPDATE contexts SET token_hash = ?1, token_salt = ?2 WHERE id = ?3 AND member_id = ?4")
+        .bind(await sha256Hex(token), salt, context, member),
       db.prepare("DELETE FROM attempts WHERE context_id = ?1").bind(context),
     ]);
     if (r.meta.changes !== 1) throw new Fail(404, "not_found");
     return { token };
   },
 
-  async "context.pin"(db, b) {
+  async "context.pin"(env, b) {
+    const db = env.DB;
     const member = memberId(b.member);
     const context = contextId(b.context);
     let pin = b.pin;
@@ -88,7 +118,8 @@ const OPS = {
     return {};
   },
 
-  async "context.delete"(db, b) {
+  async "context.delete"(env, b) {
+    const db = env.DB;
     const member = memberId(b.member);
     const context = contextId(b.context);
     await requireActiveMember(db, member);
@@ -101,7 +132,8 @@ const OPS = {
     return {};
   },
 
-  async "entry.set"(db, b, now) {
+  async "entry.set"(env, b, now) {
+    const db = env.DB;
     const member = memberId(b.member);
     const context = contextId(b.context);
     const name = entryName(b.name);
@@ -130,7 +162,8 @@ const OPS = {
     return {};
   },
 
-  async "entry.delete"(db, b) {
+  async "entry.delete"(env, b) {
+    const db = env.DB;
     const member = memberId(b.member);
     const context = contextId(b.context);
     const name = entryName(b.name);
@@ -141,12 +174,12 @@ const OPS = {
   },
 };
 
-export async function runOp(db, body, now) {
+export async function runOp(env, body, now) {
   try {
     if (!body || typeof body !== "object" || Array.isArray(body)) throw bad();
     const op = OPS[Object.hasOwn(OPS, body.op) ? body.op : ""];
     if (!op) throw bad();
-    return { status: 200, body: { ok: true, ...(await op(db, body, now)) } };
+    return { status: 200, body: { ok: true, ...(await op(env, body, now)) } };
   } catch (e) {
     if (e instanceof Fail) return { status: e.status, body: { ok: false, error: e.code } };
     console.error("internal error", e && e.message);

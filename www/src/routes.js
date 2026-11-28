@@ -4,6 +4,7 @@ const ID_RE = /^[0-9a-f-]{36}$/;
 // Operations the page may ask the api worker for. The member is always taken from the session.
 const FIELDS = {
   "context.create": ["name"],
+  "context.link": ["context"],
   "context.rotate": ["context"],
   "context.pin": ["context", "pin"],
   "context.delete": ["context"],
@@ -92,6 +93,12 @@ export async function forward(env, member, body) {
       body: JSON.stringify(out),
     });
   } catch {
+    return json(502, { ok: false, error: "unavailable" });
+  }
+  // The api worker answers 401 when the shared secret is wrong: that is a server problem, not the
+  // member's session, so it must never reach the page as a sign-out.
+  if (res.status === 401) {
+    console.error("api refused the shared secret");
     return json(502, { ok: false, error: "unavailable" });
   }
   // Pass the api's answer through (status and body only).

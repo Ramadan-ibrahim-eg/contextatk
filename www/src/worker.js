@@ -31,7 +31,9 @@ export default {
     const now = Math.floor(Date.now() / 1000);
     const path = url.pathname;
     try {
-      const page = serveStatic(request, path, env, url.origin);
+      // A signed-in member gets the app shell, never the landing page with "Sign in with Google".
+      const app = path === "/" && !!(await readSession(env.SESSION_SECRET, getCookie(request, SESSION_COOKIE), now));
+      const page = serveStatic(request, path, env, url.origin, app);
       if (page) return page;
 
       if (path === "/auth/login" && request.method === "GET") {

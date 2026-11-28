@@ -41,10 +41,12 @@ const PNG = "image/png";
 const DAY = "public, max-age=86400";
 
 const FILES = {
+  // Two bodies by session: the landing content for a visitor, the app shell for a member.
   "/": (c) => ({
-    body: PAGE.replaceAll("{{SITE}}", c.site).replace("{{VERIFY}}", verifyTag(c.env)).replace("{{FOOTER}}", FOOTER),
+    body: PAGE(c.app).replaceAll("{{SITE}}", c.site).replace("{{VERIFY}}", verifyTag(c.env)).replace("{{FOOTER}}", FOOTER),
     type: "text/html; charset=utf-8",
     cache: "no-cache",
+    extra: { vary: "cookie" },
   }),
   "/common.js": () => ({ body: COMMON, type: "text/javascript; charset=utf-8", cache: "public, max-age=300" }),
   "/theme.js": () => ({ body: THEME, type: "text/javascript; charset=utf-8", cache: "public, max-age=300" }),
@@ -66,12 +68,12 @@ for (const path of PAGE_PATHS) {
 }
 
 // Returns a Response for a page file, or null if the path is not one of them.
-export function serveStatic(request, path, env, origin) {
+export function serveStatic(request, path, env, origin, app = false) {
   if (!Object.hasOwn(FILES, path)) return null;
   if (request.method !== "GET" && request.method !== "HEAD") {
     return new Response("Method not allowed", { status: 405, headers: { allow: "GET, HEAD", ...SECURITY } });
   }
-  const f = FILES[path]({ env, site: siteOf(env, origin), readBase: env.READ_BASE_URL || `${origin}/c/` });
+  const f = FILES[path]({ env, app, site: siteOf(env, origin), readBase: env.READ_BASE_URL || `${origin}/c/` });
   return new Response(request.method === "HEAD" ? null : f.body, {
     headers: { "content-type": f.type, "cache-control": f.cache, ...SECURITY, ...(f.extra || {}) },
   });
